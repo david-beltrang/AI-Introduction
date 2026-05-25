@@ -17,6 +17,7 @@ class BayesianNetworkGUI:
         self._build_ui()
 
     def _build_ui(self):
+        """Construye la interfaz gráfica usando Tkinter."""
         header = tk.Frame(self.root)
         header.pack(fill="x", padx=20, pady=(18, 4))
         tk.Label(
@@ -40,18 +41,19 @@ class BayesianNetworkGUI:
         self._panel_consulta(main)
 
     def _make_panel(self, parent, title, row, col, rowspan=1, colspan=1):
+        """Crea un panel con borde y título, ubicado en la grilla del contenedor padre."""
         frame = tk.LabelFrame(
             parent, text=f"  {title}  ",
             bd=1, relief="solid",
             labelanchor="nw"
         )
-        frame.grid(row=row, column=col, rowspan=rowspan, columnspan=colspan,
-                   padx=6, pady=6, sticky="nsew")
+        frame.grid(row=row, column=col, rowspan=rowspan, columnspan=colspan, padx=6, pady=6, sticky="nsew")
         parent.grid_rowconfigure(row, weight=1)
         parent.grid_columnconfigure(col, weight=1)
         return frame
 
     def _panel_variables(self, main):
+        """Panel para definir variables aleatorias y su estructura (padres)."""
         panel = self._make_panel(main, "DEFINICIÓN DE VARIABLES", 0, 0)
         Label(
             panel,
@@ -83,18 +85,21 @@ class BayesianNetworkGUI:
         )
         self.var_listbox.pack(side="left", fill="both", expand=True)
 
-        sb = tk.Scrollbar(list_frame, orient="vertical",
-                           command=self.var_listbox.yview)
+        sb = tk.Scrollbar(list_frame, orient="vertical", command=self.var_listbox.yview)
         sb.pack(side="right", fill="y")
         self.var_listbox.configure(yscrollcommand=sb.set)
 
         # Generador de plantilla CPT
-        Button(
-            panel, text="Generar Plantilla de Probabilidades",
-            command=self._generar_plantilla_cpt
-        ).pack(padx=10, pady=(4, 10))
+        btn_row2 = tk.Frame(panel)
+        btn_row2.pack(padx=10, pady=(4, 10), fill="x")
+        Button(btn_row2, text="Generar Plantilla de Probabilidades",
+            command=self._generar_plantilla_cpt).pack(side="left")
+        Button(btn_row2, text="Mostrar Estructura",
+            command=self._mostrar_estructura).pack(side="left", padx=8)
+        
 
     def _panel_probabilidades(self, main):
+        """Panel para ingresar las tablas de probabilidad (CPT) de cada variable."""
         panel = self._make_panel(main, "TABLAS DE PROBABILIDAD (CPT)", 0, 1)
 
         self.cpt_text = scrolledtext.ScrolledText(
@@ -110,6 +115,7 @@ class BayesianNetworkGUI:
         self.cpt_status.pack(anchor="w", padx=10, pady=(0, 6))
 
     def _panel_consulta(self, main):
+        """Panel para ingresar la consulta de inferencia y mostrar los resultados."""
         main.grid_rowconfigure(1, weight=1)
         panel = self._make_panel(main, "CONSULTA E INFERENCIA", 1, 0, colspan=2)
 
@@ -162,6 +168,7 @@ class BayesianNetworkGUI:
     # ── LÓGICA DE VARIABLES ─────────────────────────────────────────────────
 
     def _agregar_variable(self):
+        """Parsea la definición de la variable ingresada por el usuario, valida su formato y agrega la variable a la red bayesiana."""
         texto = self.var_entry.get().strip()
         if not texto:
             messagebox.showwarning("Aviso", "Ingresa la definición de la variable.")
@@ -189,6 +196,7 @@ class BayesianNetworkGUI:
             messagebox.showerror("Error de formato", str(e))
 
     def _limpiar_todo(self):
+        """Pregunta de confirmación antes de eliminar todas las variables y datos, luego limpia la red bayesiana y la interfaz gráfica."""
         if not messagebox.askyesno("Confirmar", "¿Eliminar todas las variables y datos?"):
             return
         self.variables_definidas.clear()
@@ -201,11 +209,13 @@ class BayesianNetworkGUI:
     # ── GENERADOR DE PLANTILLA ──────────────────────────────────────────────
 
     def _generar_plantilla_cpt(self):
+        """Genera una plantilla de texto para las tablas de probabilidad (CPT) de cada variable, con probabilidades iniciales de 0.0. Esto ayuda al usuario a saber qué formato usar para ingresar las probabilidades y asegura que se incluyan todas las combinaciones necesarias según la estructura de la red bayesiana."""
         if not self.variables_definidas:
             messagebox.showwarning("Aviso", "Primero agrega variables a la red.")
             return
 
         plantilla = ""
+        # Para cada variable definida, generamos una línea en la plantilla para cada combinación de estados de sus padres. Si la variable no tiene padres, generamos una sola línea con P(NomVar) = ...
         for nombre, var in self.variables_definidas.items():
             if not var.padres:
                 plantilla += f"P({nombre}) = " + ", ".join(
@@ -227,6 +237,7 @@ class BayesianNetworkGUI:
             text="Plantilla generada — reemplaza los 0.0 con tus probabilidades.")
 
     def _cargar_probabilidades(self):
+        """Parsea el texto ingresado por el usuario para las tablas de probabilidad (CPT), valida su formato y carga las probabilidades en la red bayesiana."""
         texto = self.cpt_text.get(1.0, tk.END).strip()
         if not texto:
             messagebox.showwarning("Aviso", "Ingresa las tablas de probabilidad.")
@@ -238,15 +249,18 @@ class BayesianNetworkGUI:
             cpts = parsear_cpt_texto(texto, self.variables_definidas)
             for nombre, cpt in cpts.items():
                 self.red.definir_cpt(nombre, cpt)
+            self.cpt_status.config(
+            text=f"Probabilidades cargadas correctamente.")
 
         except Exception as e:
             self.cpt_status.config(text=f"Error: {e}")
             messagebox.showerror("Error en CPT", str(e))
 
     def _ejecutar_inferencia(self):
+        """Ejecuta la inferencia por enumeración para la consulta dada la evidencia, muestra la distribución de probabilidad resultante y el estado más probable."""
         var_consulta = self.consulta_entry.get().strip()
         evidencia_txt = self.evidencia_entry.get().strip()
- 
+
         if not var_consulta:
             messagebox.showwarning("Aviso", "Ingresa la variable a consultar.")
             return
@@ -254,7 +268,7 @@ class BayesianNetworkGUI:
             messagebox.showerror(
                 "Error", f"La variable '{var_consulta}' no está definida.")
             return
- 
+
         # Parsear evidencia
         evidencia = {}
         if evidencia_txt:
@@ -276,7 +290,7 @@ class BayesianNetworkGUI:
             except ValueError as e:
                 messagebox.showerror("Error en evidencia", str(e))
                 return
- 
+
         # Verificar que las CPTs estén cargadas
         for nombre, var in self.variables_definidas.items():
             if not var.cpt:
@@ -285,13 +299,11 @@ class BayesianNetworkGUI:
                     f"La variable '{nombre}' no tiene probabilidades cargadas.\n"
                     "Usa 'Generar Plantilla', completa los valores y carga.")
                 return
- 
+
         # Ejecutar
         self.result_text.delete(1.0, tk.END)
-        self._log("═" * 60 + "\n", "dim")
-        self._log("  INFERENCIA POR ENUMERACIÓN — RED BAYESIANA\n", "header")
-        self._log("═" * 60 + "\n", "dim")
- 
+        self._log("\n  INFERENCIA POR ENUMERACIÓN — RED BAYESIANA\n", "header")
+        
         consulta_str = f"P({var_consulta}"
         if evidencia:
             ev_str = ", ".join(f"{k}={v}" for k, v in evidencia.items())
@@ -299,29 +311,29 @@ class BayesianNetworkGUI:
             self._log(f"\n  Evidencia:   {ev_str}\n", "warn")
         consulta_str += ")"
         self._log(f"  Consulta:    {consulta_str}\n\n", "var")
- 
+
         try:
             distribucion = self.red.distribucion_completa(evidencia, var_consulta)
             total = sum(distribucion.values())
- 
+
             self._log("  Distribución de probabilidad:\n", "dim")
             self._log("  " + "─" * 36 + "\n", "dim")
- 
+
             for estado, prob in distribucion.items():
                 self._log(
                     f"  {var_consulta} = {estado:<10}", "var")
                 self._log(f"{prob * 100:6.2f}%\n", "prob")
- 
+
             self._log("  " + "─" * 36 + "\n", "dim")
             self._log(f"  Suma total: {total:.4f}", "dim")
- 
+
             if abs(total - 1.0) > 0.001:
                 self._log(
                     f"La suma no es 1.0 — revisa las probabilidades.\n",
                     "error")
             else:
                 self._log("\n", "prob")
- 
+
             # Estado más probable
             mas_probable = max(distribucion, key=distribucion.get)
             self._log(
@@ -330,18 +342,29 @@ class BayesianNetworkGUI:
                 "header"
             )
             self._log("\n" + "═" * 60 + "\n", "dim")
- 
+
         except Exception as e:
             self._log(f"\n  ERROR: {e}\n", "error")
             messagebox.showerror("Error en inferencia", str(e))
-            
+
+    def _mostrar_estructura(self):
+        """Muestra la estructura de la red bayesiana en formato texto, recorriendo desde las raíces y mostrando los predecesores de cada nodo en formato árbol."""
+        if not self.variables_definidas:
+            messagebox.showwarning("Aviso", "Primero agrega variables a la red.")
+            return
+        self.result_text.delete(1.0, tk.END)
+        self._log("\n  ESTRUCTURA DE LA RED BAYESIANA\n", "header")
+        texto = self.red.mostrar_estructura()
+        self._log("\n" + texto + "\n")
+
     def _log(self, texto, tag=None):
+        """Inserta texto en el área de resultados con un estilo opcional según el tipo de mensaje (header, var, prob, warn, error, dim). Esto ayuda a diferenciar visualmente los distintos tipos de información mostrada al usuario."""
         if tag:
             self.result_text.insert(tk.END, texto, tag)
         else:
             self.result_text.insert(tk.END, texto)
         self.result_text.see(tk.END)
- 
+
 
 if __name__ == "__main__":
     root = tk.Tk()

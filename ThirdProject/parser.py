@@ -7,8 +7,10 @@ def parsear_definicion_variable(texto):
     Retorna: VariableAleatoria
     """
     texto = texto.strip()
+    # El patrón busca un nombre seguido opcionalmente de padres entre paréntesis, luego '->' y finalmente los estados entre paréntesis
     patron = r'^(\w+)(?:\(([^)]*)\))?\s*->\s*\(([^)]+)\)$'
     m = re.match(patron, texto)
+    # Si no coincide con el patrón, lanzamos un error indicando el formato esperado
     if not m:
         raise ValueError(
             f"Formato inválido: '{texto}'\n"
@@ -19,9 +21,12 @@ def parsear_definicion_variable(texto):
     padres_str = m.group(2)
     estados_str = m.group(3)
 
+    # Si hay padres, los parseamos separándolos por comas y eliminando espacios. Si no hay padres, la lista será vacía.
     padres = [p.strip() for p in padres_str.split(',') if p.strip()] if padres_str else []
+    # Parseamos los estados separándolos por comas y eliminando espacios. Validamos que se hayan definido al menos 2 estados para la variable, ya que una variable con menos de 2 estados no es útil en una red bayesiana.
     estados = [e.strip() for e in estados_str.split(',') if e.strip()]
 
+    # Validamos que se hayan definido al menos 2 estados para la variable, ya que una variable con menos de 2 estados no es útil en una red bayesiana
     if len(estados) < 2:
         raise ValueError("La variable debe tener al menos 2 estados.")
 
@@ -29,52 +34,51 @@ def parsear_definicion_variable(texto):
 
 
 def parsear_cpt_texto(texto_cpt, variables):
-    """
-    Parsea el texto de las CPTs ingresadas por el usuario.
-    Formato esperado:
-        P(A) = 0.3, 0.7
-        P(B|A=si) = 0.9, 0.1
-        P(B|A=no) = 0.2, 0.8
-        P(C|A=si,B=x) = ...
-    """
+    """Parsea líneas de CPTs en formato: P(Var|Padre1=Val1,Padre2=Val2) = p1, p2, p3"""
     cpts = {}
     lineas = [l.strip() for l in texto_cpt.strip().splitlines() if l.strip()]
 
+    # Recorremos cada línea buscando aquellas que definan CPTs, identificadas por comenzar con 'P('
     for linea in lineas:
+        # Si la línea no comienza con 'P(', la ignoramos ya que no corresponde a una definición de CPT
         if not linea.startswith('P('):
             continue
-        # Separar LHS y RHS
-        if '=' not in linea:
-            raise ValueError(f"Línea inválida: {linea}")
-        idx_eq = linea.rindex('=')
+
+        cierre = linea.index(')')          # Posición del ')' que cierra P(...)
+        idx_eq = linea.index('=', cierre)  # Primer '=' después del cierre
+
         lhs = linea[:idx_eq].strip()
         rhs = linea[idx_eq + 1:].strip()
 
         probs = [float(x.strip()) for x in rhs.split(',')]
 
-        # Parsear LHS: P(X) o P(X|A=a,B=b)
+        # Usamos una expresión regular para extraer el nombre de la variable de consulta y las condiciones (padres y sus valores) si existen
         m = re.match(r'^P\((\w+)(?:\|([^)]*))?\)$', lhs)
+        # Si no coincide con el patrón, lanzamos un error indicando el formato esperado para las líneas de CPT
         if not m:
             raise ValueError(f"Formato inválido en cabecera: {lhs}")
 
         var_nombre = m.group(1).strip()
         condicion_str = m.group(2)
 
+        # Validamos que la variable de consulta esté definida en el conjunto de variables, ya que no podemos asignar probabilidades a una variable que no existe en la red bayesiana
         if var_nombre not in variables:
             raise ValueError(f"Variable '{var_nombre}' no definida.")
 
         var = variables[var_nombre]
 
+        # Validamos que el número de probabilidades proporcionadas coincida con el número de estados de la variable, ya que cada estado debe tener una probabilidad asociada
         if len(probs) != len(var.estados):
             raise ValueError(
                 f"La variable '{var_nombre}' tiene {len(var.estados)} estados "
                 f"pero se dieron {len(probs)} probabilidades en: {linea}"
             )
 
-        # Construir clave de padres
+        # Si hay condiciones (padres), las parseamos para construir la clave del CPT. Si no hay condiciones, la clave será una tupla vacía.
         if condicion_str:
             partes = [p.strip() for p in condicion_str.split(',')]
             clave = tuple()
+            # Para cada parte de la condición, esperamos un formato 'Padre=Valor'. Si no se cumple, lanzamos un error indicando el formato esperado para las condiciones en las líneas de CPT
             for parte in partes:
                 if '=' not in parte:
                     raise ValueError(f"Condición mal formada: {parte}")
@@ -86,6 +90,7 @@ def parsear_cpt_texto(texto_cpt, variables):
         if var_nombre not in cpts:
             cpts[var_nombre] = {}
 
+        # Asignamos las probabilidades a la variable correspondiente en el CPT, usando la clave construida a partir de las condiciones. Esto nos permite luego acceder a las probabilidades según los estados de los padres.
         cpts[var_nombre][clave] = {
             estado: prob for estado, prob in zip(var.estados, probs)
         }
