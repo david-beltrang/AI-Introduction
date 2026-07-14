@@ -1,64 +1,57 @@
-<h1 align="center">🤖 Robot Emergency Battery – A* Search</h1>
+# FirstProject — Búsqueda A* para un robot planificador
 
-## 📌 Description
-This project implements an **Artificial Intelligence search algorithm** to solve a planning problem where a maintenance robot must retrieve an **Emergency Battery** located above the Energy Room of an abandoned space station.
+## Objetivo
 
-The robot cannot reach the battery directly. To obtain it, it must:
+Resolver un problema de planificación en el que un robot debe recuperar una batería de emergencia ubicada en la posición 3 de una habitación de tamaño 10. El robot no puede alcanzarla directamente: debe empujar una caja hasta colocarla bajo la batería, subirse a la caja y luego agarrarla.
 
-- Move a **metal box** across the room  
-- Place it **under the battery**  
-- **Climb onto the box**  
-- **Grab the battery**
+## Algoritmo implementado
 
-The solution is computed using the **A\* (A-Star) informed search algorithm**, which finds an efficient sequence of actions by combining path cost and heuristic estimation.
+**Búsqueda A\* (A-estrella) con heurística de distancia compuesta**
 
----
+- `f(n) = g(n) + h(n)`
+- `g(n)`: costo acumulado según las acciones ejecutadas (mover: 1, empujar: 2, subir: 1, agarrar: 1)
+- `h(n)`: estimación que combina `|posición_caja - posición_batería| + |posición_robot - posición_caja| + penalización_por_no_estar_sobre_caja`
 
-## 🚀 Features
-- **State Space Representation** for robot position, box position, and battery status  
-- **Action Simulation** including movement, pushing the box, climbing, and grabbing the battery  
-- **A\* Search Implementation** for optimal path finding  
-- **Heuristic Function** that estimates the remaining cost to reach the goal  
-- **Step-by-step solution output**
+La lista abierta se mantiene ordenada por `f(n)` (min-heap manual con `insertar_ordenado/3`). La lista cerrada evita reevaluar estados ya procesados.
 
----
+## Cómo ejecutar
 
-## ⚙️ State Model
+Requiere SWI-Prolog instalado.
 
-Each state is represented as:
+```bash
+swipl robot-battery-box.pl
+```
 
-Where:
+Dentro del intérprete:
 
-- `PosRobot` → Robot position  
-- `PosCaja` → Box position  
-- `EncimaCaja` → Whether the robot is on the box  
-- `TieneBateria` → Whether the robot has obtained the battery  
+```prolog
+?- imprimir_solucion.
+```
 
-Goal state:
-- estado(,,_,si)
+Esto imprime en consola la secuencia de acciones numeradas, por ejemplo:
 
+```
+Solución encontrada en 6 pasos:
+  Paso 1: mover_derecha
+  Paso 2: empujar_derecha
+  ...
+```
 
----
+Para obtener solo el camino como lista:
 
-## 🧠 Algorithm
+```prolog
+?- resolver(Camino).
+```
 
-The project uses the **A\*** search algorithm:
-- f(n) = g(n) + h(n)
+## Estructura de archivos
 
-- `g(n)` → accumulated path cost  
-- `h(n)` → heuristic estimate of remaining cost  
+| Archivo | Descripción |
+|---|---|
+| `robot-battery-box.pl` | Implementación completa: hechos del mundo (posición batería, límite habitación), operadores de acción, función heurística, algoritmo A\* y predicado de impresión |
 
-The heuristic considers:
+## Notas técnicas
 
-- Distance between the **box and the battery**
-- Distance between the **robot and the box**
-- Whether the robot is already **standing on the box**
-
----
-
-## 🎯 Purpose
-This project demonstrates fundamental **Artificial Intelligence concepts**, including **state modeling, heuristic design, and informed search algorithms**, through a practical planning problem.
-
----
-
-👨‍💻 Developed for the **Introduction to Artificial Intelligence** course.
+- El **estado** se representa como `estado(PosRobot, PosCaja, EncimaCaja, TieneBateria)`. El estado meta es cualquiera donde `TieneBateria = si`.
+- El espacio de búsqueda es unidimensional (la habitación es una línea de 1 a 10), lo que hace la heurística exacta en varios casos.
+- La función `insertar_ordenado/3` mantiene la lista abierta ordenada por `F` en cada inserción, sin usar una estructura de heap nativa de Prolog.
+- `findall` se usa para generar todos los sucesores de un nodo en un solo paso.
