@@ -55,4 +55,4 @@ Ejemplos de consultas:
 - La base de conocimiento cubre tres generaciones de la familia Black, la familia Potter, los Weasley y líneas relacionadas (Malfoy, Tonks, Lupin, Granger, Dursley).
 - `es_hermano/2` tiene dos definiciones: una como hecho explícito (para Lily/Petunia) y otra como regla derivada (mismo padre y madre). Esto puede generar respuestas duplicadas en algunas consultas; usar `setof/3` para evitarlo.
 - La regla `nivel_sangre/3` distingue tres casos: `pura` (ambos padres puros, sin vínculo muggle), `muggle` (en la lista `familia_de_muggles/1`) y `mestiza` (tiene al menos un ancestro mágico puro pero no cumple la condición de pureza completa).
-- `es_pariente/2` usa `es_ancestro/3` de forma cruzada: dos personas son parientes si comparten al menos un ancestro común. Puede ser lento en consultas muy amplias por el espacio de búsqueda recursivo.
+- `es_pariente/2` usa `es_ancestro/2` de forma cruzada: dos personas son parientes si comparten al menos un ancestro común. Puede ser lento en consultas muy amplias por el espacio de búsqueda recursivo.

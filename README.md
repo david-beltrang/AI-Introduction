@@ -9,7 +9,7 @@ Proyectos y talleres desarrollados para el curso de Introducción a la Inteligen
 | [FirstProject](./FirstProject/) | Búsqueda informada — A\* para planificación de un robot | Prolog (SWI-Prolog) |
 | [SecondProject](./SecondProject/) | Lógica de Primer Orden — Motor de inferencia por resolución con conversión a FNC | Python 3, Tkinter |
 | [ThirdProject](./ThirdProject/) | Razonamiento probabilístico — Inferencia por enumeración en Redes Bayesianas | Python 3, Tkinter |
-| [FourthProject](./FourthProject/) | Dataset de clasificación — Telco Customer Churn (ML supervisado) | CSV (IBM Watson) |
+| [FourthProject](./FourthProject/) | Dataset de clasificación — Telco Customer Churn (IBM Watson) | Python, pandas, scikit-learn, TensorFlow/Keras |
 | [03-Workshop](./03-Workshop/) | Lógica declarativa — Árbol genealógico Harry Potter con razonamiento deductivo | Prolog (SWI-Prolog) |
 | [04-Workshop](./04-Workshop/) | Juegos adversariales — Tic-Tac-Toe con Minimax + Poda Alpha-Beta | Java, Swing |
 
