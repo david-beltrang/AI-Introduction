@@ -63,7 +63,7 @@ KNN no construye un modelo explícito. Para clasificar un cliente nuevo, busca l
 
 **Lo que hace el notebook:**
 - Aplica transformación logarítmica a `TotalCharges` para reducir el sesgo de la distribución.
-- Usa el **método del codo** para encontrar el K óptimo: entrena KNN con K de 1 a 20 y grafica el error para identificar el punto donde agregar más vecinos ya no mejora el modelo.
+- Usa el **método del codo** para encontrar el K óptimo: entrena KNN con K de 1 a 30 y grafica el error para identificar el punto donde agregar más vecinos ya no mejora el modelo. El valor óptimo encontrado es K=16.
 - Entrena dos versiones: una con todas las features y otra con reducción de dimensionalidad usando `ExtraTreesClassifier` para seleccionar solo las variables más importantes.
 - Compara ambas versiones con matriz de confusión, métricas (precision, recall, F1) y curvas ROC.
 
